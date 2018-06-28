@@ -1,0 +1,36 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body,
+.App {
+  width: 100vw;
+  height: 100vh;
+}
+.App {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.container {
+  width: 750px;
+  height: 512px;
+  position: relative;
+  /* overflow: hidden; */
+}
+.tile {
+  position: absolute;
+  display: block;
+  height: 25px;
+  width: 25px;
+  border: 1px solid black;
+}
+.player {
+  z-index: 1;
+  background-color: blue;
+}
+.wall {
+  background-color: black;
+}
