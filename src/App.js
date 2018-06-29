@@ -8,7 +8,7 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      playerLoc: {},
+      playerLoc: { x: 0, y: 0 },
       hasFetched: false,
       map: [],
       enemies: [],
@@ -57,15 +57,20 @@ class App extends Component {
       let tile = {};
       tile.x = x;
       tile.y = y;
-      v === 1 ? (tile.class = 'wall') : (tile.class = 'floor');
+      v === 1
+        ? ((tile.class = 'wall'), (tile.solid = true))
+        : ((tile.class = 'floor'), (tile.solid = false));
       map.push(tile);
     });
     this.setState({ map });
     const floors = map.filter(floor => floor.class === 'floor');
     const randomTiles = this.randomTiles(floors);
     const enemies = randomTiles.slice(1, 7);
+    enemies.map(tile => ((tile.class = 'enemy'), (tile.solid = true)));
     const heals = randomTiles.slice(7, 11);
+    heals.map(tile => (tile.class = 'heal'));
     const weapons = randomTiles.slice(11, 14);
+    weapons.map(tile => (tile.class = 'weapon'));
     this.setState({
       playerLoc: randomTiles[0],
       enemies: enemies,
@@ -79,7 +84,7 @@ class App extends Component {
     let floors = array;
     let randomTiles = [];
     for (let i = 0; i < 15; i++) {
-      const randomLocation = Math.floor(Math.random() * floors.length + 1);
+      const randomLocation = Math.floor(Math.random() * floors.length);
       randomTiles.push(floors[randomLocation]);
       floors.splice(randomLocation, 1);
     }

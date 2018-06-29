@@ -34,3 +34,12 @@ body,
 .wall {
   background-color: black;
 }
+.enemy {
+  background-color: red;
+}
+.heal {
+  background-color: green;
+}
+.weapon {
+  background-color: grey;
+}
