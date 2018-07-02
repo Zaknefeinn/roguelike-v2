@@ -50,3 +50,31 @@ body,
 .portal {
   background-color: purple;
 }
+.gameOverContainer {
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  color: white;
+}
+.goTop {
+  height: 50%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.goBottom {
+  width: 100%;
+  height: 50%;
+  margin-top: 20px;
+  font-size: 3.5em;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+.goBottom button {
+  padding: 10px;
+  border-radius: 3px;
+}

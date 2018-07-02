@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { Combat } from './utilities/Combat';
 
 class Player extends Component {
   constructor(props) {
@@ -9,19 +10,23 @@ class Player extends Component {
         attack: 7,
         weapon: 'Stick',
         nextLevel: 60,
-        level: 0
+        level: 1
       }
     };
   }
 
   componentDidMount() {
-    this.props.getStats(this.state.stats);
+    this.props.changeState('stats', this.state.stats);
     window.addEventListener('keydown', this.move);
   }
   componentWillUnmount() {
     window.removeEventListener('keydown', this.move);
   }
-
+  componentDidUpdate() {
+    if (this.state.stats.health <= 0) {
+      this.props.changeState('gameOver', true);
+    }
+  }
   move = e => {
     const { map } = this.props;
     let x = this.props.x;
@@ -45,10 +50,14 @@ class Player extends Component {
     const nextCell = map.findIndex(cell => cell.x === x && cell.y === y);
     if (map[nextCell] !== undefined) {
       if (!map[nextCell].solid) {
-        this.props.move({ playerLoc: { x: x, y: y } });
+        this.props.changeState('playerLoc', { x: x, y: y });
         switch (map[nextCell].class) {
           case 'heal':
-            console.log('heal');
+            const health = this.state.stats.health + 10;
+            // this.setState(prevState => ({
+            //   ...prevState.stats,
+            //   health
+            // }));
             break;
           case 'weapon':
             console.log('weapon');
@@ -57,8 +66,14 @@ class Player extends Component {
             break;
         }
       }
+      //If target is enemy
       if (map[nextCell].class === 'enemy') {
-        console.log('fight');
+        const newStats = Combat(this.state.stats, map[nextCell].stats);
+        this.setState({
+          stats: newStats.newPlayerStats
+        });
+        this.props.changeState('stats', newStats.newPlayerStats);
+        this.props.changeEnemyStats(map[nextCell], newStats.newEnemyHp);
       }
     }
   };

@@ -4,6 +4,7 @@ class Tiles extends Component {
   shouldComponentUpdate() {
     if (this.props.hasFetched) return false;
     else {
+      this.props.changeState('hasFetched', true);
       return true;
     }
   }

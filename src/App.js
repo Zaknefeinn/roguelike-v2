@@ -1,9 +1,11 @@
 import React, { Component } from 'react';
 import Tiles from './components/Tiles';
 import Player from './components/Player';
-import Scoreboard from './components/Scoreboard';
+import GameOver from './components/GameOver';
+import { Scoreboard } from './components/Scoreboard';
 import ROT from 'rot-js';
 import './App.css';
+import { EnemyStats } from './components/utilities/Combat';
 
 class App extends Component {
   constructor(props) {
@@ -16,20 +18,35 @@ class App extends Component {
       heals: [],
       weapons: [],
       portal: {},
-      stats: {}
+      stats: {},
+      level: 0,
+      gameOver: false
     };
   }
 
   componentDidMount() {
     document.getElementById('root').focus();
-    this.setState({ hasFetched: true });
     this.generateMap();
   }
-  getHeroStats = stats => {
-    this.setState({ stats });
+  changeState = (key, newState) => {
+    this.setState({ [key]: newState });
   };
-  movePlayer = nextLoc => {
-    this.setState({ playerLoc: nextLoc.playerLoc });
+  reset = () => {
+    this.setState(initialState);
+    this.generateMap();
+  };
+  changeEnemyStats = (enemy, newStats) => {
+    let enemies = this.state.enemies.slice();
+    const enemyIndex = enemies.findIndex(
+      cell => cell.x === enemy.x && cell.y === enemy.y
+    );
+    enemies[enemyIndex].stats.health = newStats;
+    if (enemies[enemyIndex].stats.health <= 0) {
+      enemies[enemyIndex].class = 'floor';
+      enemies[enemyIndex].solid = false;
+      this.setState({ hasFetched: false });
+    }
+    this.setState({ enemies });
   };
   generateMap = () => {
     let map = [];
@@ -50,7 +67,9 @@ class App extends Component {
     const enemies = randomTiles.slice(1, 7);
     enemies.map(
       tile => (
-        (tile.class = 'enemy'), (tile.solid = true), (tile.stats = 'test')
+        (tile.class = 'enemy'),
+        (tile.solid = true),
+        (tile.stats = EnemyStats(this.state.level))
       )
     );
     const heals = randomTiles.slice(7, 11);
@@ -83,20 +102,43 @@ class App extends Component {
     const { playerLoc, enemies } = this.state;
     return (
       <div className="App">
-        <Scoreboard stats={this.state.stats} />
-        <div className="container">
-          <Tiles hasFetched={this.state.hasFetched} map={this.state.map} />
-          <Player
-            map={this.state.map}
-            move={next => this.movePlayer(next)}
-            getStats={stats => this.getHeroStats(stats)}
-            x={playerLoc.x}
-            y={playerLoc.y}
-          />
-        </div>
+        <Scoreboard stats={this.state.stats} level={this.state.level} />
+        {this.state.gameOver ? (
+          <GameOver reset={() => this.reset()} />
+        ) : (
+          <div className="container">
+            <Tiles
+              hasFetched={this.state.hasFetched}
+              map={this.state.map}
+              changeState={(key, newState) => this.changeState(key, newState)}
+            />
+            <Player
+              map={this.state.map}
+              changeState={(key, newState) => this.changeState(key, newState)}
+              changeEnemyStats={(enemy, stats) =>
+                this.changeEnemyStats(enemy, stats)
+              }
+              x={playerLoc.x}
+              y={playerLoc.y}
+            />
+          </div>
+        )}
       </div>
     );
   }
 }
 
 export default App;
+
+const initialState = {
+  playerLoc: { x: 0, y: 0 },
+  hasFetched: false,
+  map: [],
+  enemies: [],
+  heals: [],
+  weapons: [],
+  portal: {},
+  stats: {},
+  level: 0,
+  gameOver: false
+};
