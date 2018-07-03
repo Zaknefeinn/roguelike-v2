@@ -3,11 +3,14 @@ import React, { Component } from 'react';
 class Tiles extends Component {
   shouldComponentUpdate() {
     if (this.props.hasFetched) return false;
-    else {
+    else if (this.props.loadLevel) {
+      return true;
+    } else {
       this.props.changeState('hasFetched', true);
       return true;
     }
   }
+
   map = () => {
     let screen = [];
     for (let i = 0; i <= 30; i++) {

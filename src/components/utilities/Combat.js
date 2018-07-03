@@ -24,7 +24,7 @@ export const Combat = (playerStats, enemyStats) => {
   playerXP <= 0
     ? ((playerLevel = playerStats.level + 1), (playerXP = 60))
     : (playerLevel = playerStats.level);
-  
+
   const newPlayerStats = {
     attack: playerAtk,
     health: playerHp,
@@ -32,7 +32,5 @@ export const Combat = (playerStats, enemyStats) => {
     nextLevel: playerXP,
     weapon: 'Stick'
   };
-  console.log(newPlayerStats);
   return { newPlayerStats, newEnemyHp };
-  // return { newPlayerHp, newEnemyHp, playerXP, playerLevel };
 };

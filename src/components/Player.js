@@ -1,29 +1,22 @@
 import React, { Component } from 'react';
 import { Combat } from './utilities/Combat';
+import { LocateCell } from './utilities/Map';
 
 class Player extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      stats: {
-        health: 100,
-        attack: 7,
-        weapon: 'Stick',
-        nextLevel: 60,
-        level: 1
-      }
+      show: false
     };
   }
-
   componentDidMount() {
-    this.props.changeState('stats', this.state.stats);
     window.addEventListener('keydown', this.move);
   }
   componentWillUnmount() {
     window.removeEventListener('keydown', this.move);
   }
   componentDidUpdate() {
-    if (this.state.stats.health <= 0) {
+    if (this.props.stats.health <= 0) {
       this.props.changeState('gameOver', true);
     }
   }
@@ -31,6 +24,8 @@ class Player extends Component {
     const { map } = this.props;
     let x = this.props.x;
     let y = this.props.y;
+
+    const thisCell = map[map.findIndex(cell => cell.x === x && cell.y === y)];
     switch (e.keyCode) {
       case 37:
         x -= 1;
@@ -44,36 +39,50 @@ class Player extends Component {
       case 40:
         y += 1;
         break;
+      case 32:
+        if (thisCell.class === 'portal') {
+          this.props.nextLevel();
+        }
       default:
         break;
     }
-    const nextCell = map.findIndex(cell => cell.x === x && cell.y === y);
-    if (map[nextCell] !== undefined) {
-      if (!map[nextCell].solid) {
-        this.props.changeState('playerLoc', { x: x, y: y });
-        switch (map[nextCell].class) {
-          case 'heal':
-            const health = this.state.stats.health + 10;
-            // this.setState(prevState => ({
-            //   ...prevState.stats,
-            //   health
-            // }));
-            break;
-          case 'weapon':
-            console.log('weapon');
-            break;
-          default:
-            break;
+    const nextCell = map[map.findIndex(cell => cell.x === x && cell.y === y)];
+    if (nextCell !== undefined) {
+      if (!this.props.loadLevel) {
+        if (!nextCell.solid) {
+          this.props.changeState('playerLoc', { x: x, y: y });
+          this.props.changeState('showTooltip', false);
+          let stats = { ...this.props.stats };
+          switch (nextCell.class) {
+            case 'heal':
+              const health = stats.health + 10;
+              stats.health = health;
+              this.props.removeCell(nextCell);
+              break;
+            case 'weapon':
+              const attack = stats.attack + 4;
+              stats.attack = attack;
+              this.props.removeCell(nextCell);
+              break;
+            case 'portal':
+              this.props.changeState('showTooltip', true);
+            default:
+              break;
+          }
+          this.props.changeState('stats', stats);
         }
-      }
-      //If target is enemy
-      if (map[nextCell].class === 'enemy') {
-        const newStats = Combat(this.state.stats, map[nextCell].stats);
-        this.setState({
-          stats: newStats.newPlayerStats
-        });
-        this.props.changeState('stats', newStats.newPlayerStats);
-        this.props.changeEnemyStats(map[nextCell], newStats.newEnemyHp);
+        //If target is enemy
+        if (nextCell.class === 'enemy') {
+          const newStats = Combat(this.props.stats, nextCell.stats);
+          this.props.changeState('stats', newStats.newPlayerStats);
+          if (newStats.newEnemyHp > 0) {
+            nextCell.stats.health = newStats.newEnemyHp;
+          } else {
+            this.props.removeCell(nextCell);
+          }
+        }
+      } else {
+        this.props.changeState('nextLevel', false);
       }
     }
   };

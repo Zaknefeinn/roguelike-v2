@@ -3,6 +3,7 @@ import Tiles from './components/Tiles';
 import Player from './components/Player';
 import GameOver from './components/GameOver';
 import { Scoreboard } from './components/Scoreboard';
+import { RandomTiles, LocateCell } from './components/utilities/Map';
 import ROT from 'rot-js';
 import './App.css';
 import { EnemyStats } from './components/utilities/Combat';
@@ -14,13 +15,18 @@ class App extends Component {
       playerLoc: { x: 0, y: 0 },
       hasFetched: false,
       map: [],
-      enemies: [],
-      heals: [],
-      weapons: [],
       portal: {},
-      stats: {},
+      stats: {
+        health: 100,
+        attack: 7,
+        weapon: 'Stick',
+        nextLevel: 60,
+        level: 1
+      },
       level: 0,
-      gameOver: false
+      gameOver: false,
+      showTooltip: false,
+      nextLevel: false
     };
   }
 
@@ -35,18 +41,18 @@ class App extends Component {
     this.setState(initialState);
     this.generateMap();
   };
-  changeEnemyStats = (enemy, newStats) => {
-    let enemies = this.state.enemies.slice();
-    const enemyIndex = enemies.findIndex(
-      cell => cell.x === enemy.x && cell.y === enemy.y
-    );
-    enemies[enemyIndex].stats.health = newStats;
-    if (enemies[enemyIndex].stats.health <= 0) {
-      enemies[enemyIndex].class = 'floor';
-      enemies[enemyIndex].solid = false;
-      this.setState({ hasFetched: false });
-    }
-    this.setState({ enemies });
+  nextLevel = () => {
+    this.setState({ level: this.state.level + 1 });
+    this.setState({ hasFetched: false, nextLevel: true });
+    this.generateMap();
+  };
+  removeCell = cell => {
+    const map = [...this.state.map];
+    const mapIndex = LocateCell(map, cell);
+    map[mapIndex].class = 'floor';
+    map[mapIndex].solid = false;
+    this.setState({ hasFetched: false });
+    this.setState({ map });
   };
   generateMap = () => {
     let map = [];
@@ -62,8 +68,7 @@ class App extends Component {
     });
     const filteredMap = map.filter(tile => tile.class !== 'wall');
     this.setState({ map: filteredMap });
-    const floors = map.filter(floor => floor.class === 'floor');
-    const randomTiles = this.randomTiles(floors);
+    const randomTiles = RandomTiles(map.filter(tile => tile.class !== 'wall'));
     const enemies = randomTiles.slice(1, 7);
     enemies.map(
       tile => (
@@ -78,28 +83,23 @@ class App extends Component {
     weapons.map(tile => (tile.class = 'weapon'));
     const portal = randomTiles[14];
     portal.class = 'portal';
+    console.log(randomTiles[0]);
     this.setState({
       playerLoc: randomTiles[0],
-      enemies: enemies,
-      heals: heals,
-      weapons: weapons,
       portal: portal
     });
   };
 
-  randomTiles = array => {
-    let floors = array;
-    let randomTiles = [];
-    for (let i = 0; i < 15; i++) {
-      const randomLocation = Math.floor(Math.random() * floors.length);
-      randomTiles.push(floors[randomLocation]);
-      floors.splice(randomLocation, 1);
-    }
-    return randomTiles;
-  };
-
   render() {
-    const { playerLoc, enemies } = this.state;
+    const { playerLoc } = this.state;
+    let toolTip;
+    if (this.state.showTooltip) {
+      toolTip = (
+        <div id="next-level">
+          <h1>Press space to go to the next level</h1>
+        </div>
+      );
+    }
     return (
       <div className="App">
         <Scoreboard stats={this.state.stats} level={this.state.level} />
@@ -107,19 +107,25 @@ class App extends Component {
           <GameOver reset={() => this.reset()} />
         ) : (
           <div className="container">
+            {toolTip}
             <Tiles
               hasFetched={this.state.hasFetched}
               map={this.state.map}
               changeState={(key, newState) => this.changeState(key, newState)}
+              loadLevel={this.state.nextLevel}
             />
             <Player
               map={this.state.map}
+              stats={this.state.stats}
               changeState={(key, newState) => this.changeState(key, newState)}
               changeEnemyStats={(enemy, stats) =>
                 this.changeEnemyStats(enemy, stats)
               }
+              removeCell={cell => this.removeCell(cell)}
               x={playerLoc.x}
               y={playerLoc.y}
+              nextLevel={() => this.nextLevel()}
+              loadLevel={this.state.nextLevel}
             />
           </div>
         )}
@@ -138,7 +144,13 @@ const initialState = {
   heals: [],
   weapons: [],
   portal: {},
-  stats: {},
+  stats: {
+    health: 100,
+    attack: 7,
+    weapon: 'Stick',
+    nextLevel: 60,
+    level: 1
+  },
   level: 0,
   gameOver: false
 };

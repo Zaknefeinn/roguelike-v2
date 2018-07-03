@@ -78,3 +78,9 @@ body,
   padding: 10px;
   border-radius: 3px;
 }
+#next-level {
+  position: absolute;
+  top: 0;
+  color: white;
+  z-index: 2;
+}
